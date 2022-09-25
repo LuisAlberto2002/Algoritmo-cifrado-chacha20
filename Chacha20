@@ -1,0 +1,55 @@
+//Mandamos llamar las liberias que necesitamos para ejecutar el programa
+#include <iostream>
+#include "sodium.h"
+
+int main()
+{   
+    //Empleamos un if para asegurarnos de que la libreria esta disponible
+    //Si ese no es el caso devolvera -1 lo que provocara un error, de no ser ese caso
+    //entonces el codigo se ejecutara.
+    if (sodium_init() < 0) {
+        /* panic! the library couldn't be initialized; it is not safe to use */
+        return -1;
+    }
+    /*Declaramos una variable de tipo char llamada message la cual 
+    guardara nuestro mensaje*/
+    unsigned char message[] = "Me llamo Luis";
+    /*Declaramos un apuntador de tipo char llamado key, y una variable de tipo entero llamado mlen y le
+    asignamos el valor de 20*/
+    unsigned char* key;
+    size_t mlen = 20;
+    /*Le reservamos un espacio en la memoria a la variable key de 64 bits de tamaño y le asignamos un valor
+    aleatorio empleando libsodium, dicho valor estara dentro del rango de 64 bits, esta variable sera clave 
+    para cifrar el mensaje contenido en la variable message*/
+    key = (unsigned char *) malloc(crypto_stream_chacha20_KEYBYTES);
+    randombytes_buf(key, crypto_stream_chacha20_KEYBYTES);
+    //Para conocer la llave que genero la funcion, la mandamos a imprimir en consola
+    printf("Llave: %x\n\n\n", key);
+    /*Declaramos un apuntador de tipo char llamado nounce, le reservaremos un espacio en la memoria de la misma
+    forma que el apuntador key, y le asignameron un valor aleatorio al igual que al apundador key*/
+    unsigned char* nounce;
+    nounce = (unsigned char *) malloc(crypto_stream_chacha20_NONCEBYTES);
+    randombytes_buf(nounce, crypto_stream_chacha20_NONCEBYTES);
+    /*Declaramos un apuntador de tipo char llamado c y realizamos el mismo procedimiento que con los apuntadores
+    anteriores, sin embargo, no le asignaremos un valor aleatorio ya que en esta variable almacenaremos nuestro
+    mensaje encriptado*/
+    unsigned char* c;
+    c = (unsigned char *)malloc(crypto_stream_chacha20_NONCEBYTES);
+    printf("mensaje codificado\n\n");
+    /*Mandamos llamar la funcion de cifrado de chacha20 contenida en la libreria libsodium y asignamos
+    las variables correspondientes en el orden que corresponden*/
+    crypto_stream_chacha20_xor(c, message, mlen, nounce, key);
+    /*Empleamos un ciclo for para imprimir el mensaje contenido en el apuntador c*/
+    for (int i = 0; i < 14; i++) {
+        printf("%x",c[i]);
+    }
+    /*Empleamos el mismo proceso para descencriptar el mensaje, unicamente intercambiamos las posiciones
+    de las variables c y message.*/
+    
+    printf("\nmensaje decifrado\n\n");
+    crypto_stream_chacha20_xor(message, c, mlen, nounce, key);
+    for (int i = 0; i < 14; i++) {
+        printf("%c", message[i]);
+    }
+
+}
